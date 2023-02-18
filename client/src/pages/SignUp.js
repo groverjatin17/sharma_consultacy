@@ -1,0 +1,185 @@
+import * as React from "react";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Grid";
+import { Link, useNavigate } from "react-router-dom";
+import { Field, Form, FormSpy } from "react-final-form";
+import Typography from "../modules/components/Typography";
+import AppFooter from "../modules/views/AppFooter";
+import AppAppBar from "../modules/views/AppAppBar";
+import AppForm from "../modules/views/AppForm";
+import { email, required } from "../modules/form/validation";
+import RFTextField from "../modules/form/RFTextField";
+import FormButton from "../modules/form/FormButton";
+import FormFeedback from "../modules/form/FormFeedback";
+import withRoot from "../modules/withRoot";
+import * as api from "../api";
+import { useDispatch } from "react-redux";
+import { setUser } from "../redux/userSlice";
+
+function SignUp() {
+  const [sent, setSent] = React.useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [error, setError] = React.useState("");
+  const validate = (values) => {
+    const errors = required(
+      ["firstName", "lastName", "email", "password"],
+      values
+    );
+
+    if (!errors.email) {
+      const emailError = email(values.email);
+      if (emailError) {
+        errors.email = emailError;
+      }
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async (formData) => {
+    const response = await api.signUp(formData).catch((error) => {
+      const {
+        response: {
+          status,
+          data: { message },
+        },
+      } = error;
+
+      if (status === 409) {
+        setError(message);
+      }
+    });
+
+    const { name, email } = response?.data.result;
+
+    if (response.status === 200) {
+      dispatch(setUser({ name, email }));
+      navigate("/");
+    }
+    setSent(true);
+  };
+
+  console.log("sent: ", sent);
+  return (
+    <React.Fragment>
+      <AppAppBar />
+      <AppForm>
+        <React.Fragment>
+          <Typography variant="h3" gutterBottom marked="center" align="center">
+            Sign Up
+          </Typography>
+          <Typography variant="body2" align="center">
+            <Link
+              to="/signin"
+              style={{
+                textDecoration: "underline",
+                color: "#28282a",
+                textDecorationColor: "rgba(40, 40, 42, 0.4)",
+              }}
+            >
+              Already have an account?
+            </Link>
+          </Typography>
+        </React.Fragment>
+        <Form
+          onSubmit={handleSubmit}
+          subscription={{ submitting: true }}
+          validate={validate}
+        >
+          {({ handleSubmit: handleSubmit2, submitting }) => (
+            <Box
+              component="form"
+              onSubmit={handleSubmit2}
+              noValidate
+              sx={{ mt: 6 }}
+            >
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Field
+                    autoFocus
+                    component={RFTextField}
+                    disabled={submitting || sent}
+                    autoComplete="given-name"
+                    fullWidth
+                    label="First name"
+                    name="firstName"
+                    required
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Field
+                    component={RFTextField}
+                    disabled={submitting || sent}
+                    autoComplete="family-name"
+                    fullWidth
+                    label="Last name"
+                    name="lastName"
+                    required
+                  />
+                </Grid>
+              </Grid>
+              <Field
+                autoComplete="email"
+                component={RFTextField}
+                disabled={submitting || sent}
+                fullWidth
+                label="Email"
+                margin="normal"
+                name="email"
+                required
+              />
+              <Field
+                fullWidth
+                component={RFTextField}
+                disabled={submitting || sent}
+                required
+                name="password"
+                autoComplete="new-password"
+                label="Password"
+                type="password"
+                margin="normal"
+              />
+              <FormSpy subscription={{ submitError: true }}>
+                {({ submitError }) =>
+                  submitError ? (
+                    <FormFeedback error sx={{ mt: 2 }}>
+                      {submitError}
+                    </FormFeedback>
+                  ) : null
+                }
+              </FormSpy>
+              {error && (
+                <p
+                  style={{
+                    color: "#f44336",
+                    fontFamily: "'Work Sans',sans-serif",
+                    fontWeight: "400",
+                    fontSize: "0.75rem",
+                    lineHeight: "1.66",
+                    textAlign: "left",
+                    marginTop: "3px",
+                    marginRight: "0",
+                  }}
+                >
+                  {error}
+                </p>
+              )}
+              <FormButton
+                sx={{ mt: 3, mb: 2 }}
+                disabled={submitting || sent}
+                color="secondary"
+                fullWidth
+              >
+                {submitting || sent ? "In progress…" : "Sign Up"}
+              </FormButton>
+            </Box>
+          )}
+        </Form>
+      </AppForm>
+      <AppFooter />
+    </React.Fragment>
+  );
+}
+
+export default withRoot(SignUp);

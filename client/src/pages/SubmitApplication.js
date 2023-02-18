@@ -1,7 +1,7 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Field, Form, FormSpy } from "react-final-form";
 import Typography from "../modules/components/Typography";
 import AppFooter from "../modules/views/AppFooter";
@@ -12,13 +12,18 @@ import RFTextField from "../modules/form/RFTextField";
 import FormButton from "../modules/form/FormButton";
 import FormFeedback from "../modules/form/FormFeedback";
 import withRoot from "../modules/withRoot";
+import * as api from "../api";
+import { useDispatch } from "react-redux";
+import { setUser } from "../redux/userSlice";
 
-function SignUp() {
+function SubmitApplication() {
   const [sent, setSent] = React.useState(false);
-
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [error, setError] = React.useState("");
   const validate = (values) => {
     const errors = required(
-      ["firstName", "lastName", "email", "password"],
+      ["firstName", "lastName", "email", "phonenumber"],
       values
     );
 
@@ -32,8 +37,11 @@ function SignUp() {
     return errors;
   };
 
-  const handleSubmit = () => {
-    setSent(true);
+  const handleSubmit = async (formData) => {
+    console.log(
+      "🚀 ~ file: SubmitApplication.js:21 ~ handleSubmit ~ formData",
+      formData
+    );
   };
 
   return (
@@ -109,10 +117,19 @@ function SignUp() {
                 component={RFTextField}
                 disabled={submitting || sent}
                 required
-                name="password"
-                autoComplete="new-password"
-                label="Password"
-                type="password"
+                name="phonenumber"
+                label="Phone Number"
+                type="text"
+                margin="normal"
+              />
+              <Field
+                fullWidth
+                component={RFTextField}
+                disabled={submitting || sent}
+                required
+                name="resume"
+                label="Resume/CV"
+                type="file"
                 margin="normal"
               />
               <FormSpy subscription={{ submitError: true }}>
@@ -124,6 +141,22 @@ function SignUp() {
                   ) : null
                 }
               </FormSpy>
+              {error && (
+                <p
+                  style={{
+                    color: "#f44336",
+                    fontFamily: "'Work Sans',sans-serif",
+                    fontWeight: "400",
+                    fontSize: "0.75rem",
+                    lineHeight: "1.66",
+                    textAlign: "left",
+                    marginTop: "3px",
+                    marginRight: "0",
+                  }}
+                >
+                  {error}
+                </p>
+              )}
               <FormButton
                 sx={{ mt: 3, mb: 2 }}
                 disabled={submitting || sent}
@@ -141,4 +174,4 @@ function SignUp() {
   );
 }
 
-export default withRoot(SignUp);
+export default withRoot(SubmitApplication);
